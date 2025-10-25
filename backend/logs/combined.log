@@ -1,0 +1,3 @@
+{"level":"info","message":"MongoDB connected successfully","service":"quizsync-backend","timestamp":"2025-10-25T17:43:00.237Z"}
+{"level":"info","message":"Sample host created:","service":"quizsync-backend","timestamp":"2025-10-25T17:43:00.569Z"}
+{"level":"info","message":"Sample quiz created:","service":"quizsync-backend","timestamp":"2025-10-25T17:43:00.581Z"}
