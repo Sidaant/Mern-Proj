@@ -4,6 +4,7 @@ import { Session } from '../models/Session';
 import { Quiz } from '../models/Quiz';
 import { logger } from '../config/logger';
 import { joinSessionSchema, playerSubmitAnswerSchema } from '../utils/validation';
+import { verifyAccessToken } from '../utils/jwt';
 
 interface PlayerSocket {
   id: string;
@@ -32,6 +33,89 @@ export const initializeGameSocket = (server: HTTPServer) => {
 
   io.on('connection', (socket) => {
     logger.info(`Socket connected: ${socket.id}`);
+
+    // Authenticate socket connection for host
+    socket.on('host:authenticate', (data) => {
+      try {
+        const { token } = data;
+        if (!token) {
+          socket.emit('server:error', { message: 'Authentication required' });
+          return;
+        }
+
+        const decoded = verifyAccessToken(token);
+        (socket as any).hostId = decoded.userId;
+        (socket as any).hostEmail = decoded.email;
+        
+        socket.emit('server:authenticated');
+        logger.info(`Host authenticated: ${decoded.email}`);
+      } catch (error) {
+        logger.error('Socket authentication error:', error);
+        socket.emit('server:error', { message: 'Invalid authentication token' });
+      }
+    });
+
+    // Host joins existing session
+    socket.on('host:join_session', async (data) => {
+      try {
+        const { sessionId } = data;
+        
+        if (!(socket as any).hostId) {
+          socket.emit('server:error', { message: 'Authentication required' });
+          return;
+        }
+
+        const session = await Session.findById(sessionId).populate('quizId');
+        if (!session) {
+          socket.emit('server:error', { message: 'Session not found' });
+          return;
+        }
+
+        // Verify host owns this session
+        if (session.hostId.toString() !== (socket as any).hostId) {
+          socket.emit('server:error', { message: 'Unauthorized' });
+          return;
+        }
+
+        // Join socket room
+        socket.join(sessionId);
+        
+        // Store host info
+        (socket as any).playerInfo = {
+          id: socket.id,
+          name: 'Host',
+          sessionId: sessionId,
+          isHost: true
+        };
+
+        // Initialize game state if not exists
+        if (!gameStates.has(sessionId)) {
+          gameStates.set(sessionId, {
+            sessionId: sessionId,
+            currentQuestionIndex: session.currentQuestionIndex,
+            isActive: session.isActive,
+            isLocked: session.isLocked
+          });
+        }
+
+        socket.emit('server:session_joined', {
+          session: {
+            id: (session._id as any).toString(),
+            pin: session.pin,
+            quiz: session.quizId,
+            players: session.players,
+            currentQuestionIndex: session.currentQuestionIndex,
+            isActive: session.isActive,
+            isLocked: session.isLocked
+          }
+        });
+
+        logger.info(`Host joined session: ${sessionId}`);
+      } catch (error) {
+        logger.error('Host join session error:', error);
+        socket.emit('server:error', { message: 'Failed to join session' });
+      }
+    });
 
     // Player joins session
     socket.on('player:join', async (data) => {
@@ -63,18 +147,18 @@ export const initializeGameSocket = (server: HTTPServer) => {
         await session.save();
 
         // Join socket room
-        socket.join(session._id.toString());
+        socket.join((session._id as any).toString());
         
         // Store player info
         (socket as any).playerInfo = {
           id: playerId,
           name,
-          sessionId: session._id.toString(),
+          sessionId: (session._id as any).toString(),
           isHost: false
         };
 
         // Notify host about new player
-        socket.to(session._id.toString()).emit('server:player_joined', {
+        socket.to((session._id as any).toString()).emit('server:player_joined', {
           playerId,
           name,
           playerCount: session.players.length
@@ -82,13 +166,13 @@ export const initializeGameSocket = (server: HTTPServer) => {
 
         // Send current session state to player
         socket.emit('server:session_joined', {
-          sessionId: session._id.toString(),
+          sessionId: (session._id as any).toString(),
           pin: session.pin,
           playerCount: session.players.length,
           isActive: session.isActive
         });
 
-        logger.info(`Player joined: ${name} to session ${session._id}`);
+        logger.info(`Player joined: ${name} to session ${(session._id as any)}`);
       } catch (error) {
         logger.error('Player join error:', error);
         socket.emit('server:error', { message: 'Failed to join session' });
@@ -100,10 +184,18 @@ export const initializeGameSocket = (server: HTTPServer) => {
       try {
         const { quizId } = data;
         
-        // Find quiz
-        const quiz = await Quiz.findById(quizId);
+        // Check if host is authenticated
+        if (!(socket as any).hostId) {
+          socket.emit('server:error', { message: 'Authentication required' });
+          return;
+        }
+
+        const hostId = (socket as any).hostId;
+        
+        // Find quiz and verify ownership
+        const quiz = await Quiz.findOne({ _id: quizId, hostId });
         if (!quiz) {
-          socket.emit('server:error', { message: 'Quiz not found' });
+          socket.emit('server:error', { message: 'Quiz not found or unauthorized' });
           return;
         }
 
@@ -118,7 +210,7 @@ export const initializeGameSocket = (server: HTTPServer) => {
 
         const session = new Session({
           quizId,
-          hostId: (socket as any).hostId,
+          hostId,
           pin,
           players: [],
           currentQuestionIndex: -1,
@@ -129,31 +221,31 @@ export const initializeGameSocket = (server: HTTPServer) => {
         await session.save();
 
         // Join socket room
-        socket.join(session._id.toString());
+        socket.join((session._id as any).toString());
         
         // Store host info
         (socket as any).playerInfo = {
           id: socket.id,
           name: 'Host',
-          sessionId: session._id.toString(),
+          sessionId: (session._id as any).toString(),
           isHost: true
         };
 
         // Initialize game state
-        gameStates.set(session._id.toString(), {
-          sessionId: session._id.toString(),
+        gameStates.set((session._id as any).toString(), {
+          sessionId: (session._id as any).toString(),
           currentQuestionIndex: -1,
           isActive: false,
           isLocked: false
         });
 
         socket.emit('server:session_created', {
-          sessionId: session._id.toString(),
+          sessionId: (session._id as any).toString(),
           pin: session.pin,
           quiz: quiz
         });
 
-        logger.info(`Host session created: ${session._id} with PIN ${pin}`);
+        logger.info(`Host session created: ${(session._id as any)} with PIN ${pin}`);
       } catch (error) {
         logger.error('Host create session error:', error);
         socket.emit('server:error', { message: 'Failed to create session' });
@@ -166,7 +258,7 @@ export const initializeGameSocket = (server: HTTPServer) => {
         const { questionIndex } = data;
         const playerInfo = (socket as any).playerInfo as PlayerSocket;
         
-        if (!playerInfo?.isHost) {
+        if (!playerInfo?.isHost || !(socket as any).hostId) {
           socket.emit('server:error', { message: 'Unauthorized' });
           return;
         }
@@ -311,7 +403,7 @@ export const initializeGameSocket = (server: HTTPServer) => {
       try {
         const playerInfo = (socket as any).playerInfo as PlayerSocket;
         
-        if (!playerInfo?.isHost) {
+        if (!playerInfo?.isHost || !(socket as any).hostId) {
           socket.emit('server:error', { message: 'Unauthorized' });
           return;
         }
@@ -353,7 +445,7 @@ export const initializeGameSocket = (server: HTTPServer) => {
       try {
         const playerInfo = (socket as any).playerInfo as PlayerSocket;
         
-        if (!playerInfo?.isHost) {
+        if (!playerInfo?.isHost || !(socket as any).hostId) {
           socket.emit('server:error', { message: 'Unauthorized' });
           return;
         }

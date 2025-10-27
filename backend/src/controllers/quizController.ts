@@ -17,12 +17,12 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
 
     await quiz.save();
 
-    logger.info(`Quiz created: ${quiz._id} by ${req.user!.email}`);
+    logger.info(`Quiz created: ${(quiz._id as any)} by ${req.user!.email}`);
 
     res.status(201).json({
       message: 'Quiz created successfully',
       quiz: {
-        id: quiz._id,
+        id: (quiz._id as any),
         title: quiz.title,
         description: quiz.description,
         questions: quiz.questions,
@@ -44,7 +44,7 @@ export const getQuizzes = async (req: AuthRequest, res: Response) => {
 
     res.json({
       quizzes: quizzes.map(quiz => ({
-        id: quiz._id,
+        id: (quiz._id as any),
         title: quiz.title,
         description: quiz.description,
         questionCount: quiz.questions.length,
@@ -70,7 +70,7 @@ export const getQuiz = async (req: AuthRequest, res: Response) => {
 
     res.json({
       quiz: {
-        id: quiz._id,
+        id: (quiz._id as any),
         title: quiz.title,
         description: quiz.description,
         questions: quiz.questions,
@@ -105,7 +105,7 @@ export const updateQuiz = async (req: AuthRequest, res: Response) => {
     res.json({
       message: 'Quiz updated successfully',
       quiz: {
-        id: quiz._id,
+        id: (quiz._id as any),
         title: quiz.title,
         description: quiz.description,
         questions: quiz.questions,

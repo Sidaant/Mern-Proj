@@ -36,12 +36,12 @@ export const createSession = async (req: AuthRequest, res: Response) => {
 
     await session.save();
 
-    logger.info(`Session created: ${session._id} with PIN ${pin} by ${req.user!.email}`);
+    logger.info(`Session created: ${(session._id as any)} with PIN ${pin} by ${req.user!.email}`);
 
     res.status(201).json({
       message: 'Session created successfully',
       session: {
-        id: session._id,
+        id: (session._id as any),
         pin: session.pin,
         quizId: session.quizId,
         playerCount: session.players.length,
@@ -68,7 +68,7 @@ export const getSession = async (req: AuthRequest, res: Response) => {
 
     res.json({
       session: {
-        id: session._id,
+        id: (session._id as any),
         pin: session.pin,
         quiz: session.quizId,
         players: session.players,
@@ -95,7 +95,7 @@ export const getSessions = async (req: AuthRequest, res: Response) => {
 
     res.json({
       sessions: sessions.map(session => ({
-        id: session._id,
+        id: (session._id as any),
         pin: session.pin,
         quizTitle: (session.quizId as any).title,
         playerCount: session.players.length,

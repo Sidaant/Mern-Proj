@@ -56,6 +56,19 @@ const HostPage: React.FC = () => {
     
     socketService.on('server:authenticated', () => {
       console.log('Socket authenticated as host');
+      // Join the session after authentication
+      if (sessionId) {
+        socketService.emit('host:join_session' as any, { sessionId });
+      }
+    });
+    
+    socketService.on('server:session_joined' as any, (data: any) => {
+      console.log('Host joined session:', data);
+      if (data.session) {
+        setSession(data.session);
+        setCurrentQuestionIndex(data.session.currentQuestionIndex);
+        setIsGameActive(data.session.isActive);
+      }
     });
 
     socketService.on('server:session_created', (data: SocketEvents['server:session_created']) => {
@@ -149,6 +162,7 @@ const HostPage: React.FC = () => {
   };
 
   const startQuestion = (questionIndex: number) => {
+    console.log('Starting question:', questionIndex);
     socketService.emit('host:start_question', { questionIndex });
     setCurrentQuestionIndex(questionIndex);
     setIsGameActive(true);
@@ -254,7 +268,7 @@ const HostPage: React.FC = () => {
                         key={index}
                         onClick={() => startQuestion(index)}
                         className="flex items-center justify-center h-auto py-4"
-                        disabled={session.players.length === 0}
+                        disabled={false}
                       >
                         <Play className="h-5 w-5 mr-2" />
                         <div className="text-left">

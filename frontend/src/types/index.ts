@@ -72,6 +72,7 @@ export interface LeaderboardEntry {
 export interface SocketEvents {
   // Host events
   'host:authenticate': { token: string };
+  'host:join_session': { sessionId: string };
   'host:create_session': { quizId: string };
   'host:start_question': { questionIndex: number };
   'host:next_question': {};

@@ -122,3 +122,8 @@ When hosting a game:
 - **Can't connect?** Make sure both servers are running
 - **PIN not working?** Make sure you're using the correct PIN
 
+
+
+
+
+
