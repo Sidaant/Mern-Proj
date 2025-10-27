@@ -71,6 +71,7 @@ export interface LeaderboardEntry {
 // Socket event types
 export interface SocketEvents {
   // Host events
+  'host:authenticate': { token: string };
   'host:create_session': { quizId: string };
   'host:start_question': { questionIndex: number };
   'host:next_question': {};
@@ -81,6 +82,7 @@ export interface SocketEvents {
   'player:submit_answer': { questionIndex: number; answerIndex: number; timeTakenMs: number };
   
   // Server events
+  'server:authenticated': {};
   'server:session_created': { sessionId: string; pin: string; quiz: Quiz };
   'server:session_joined': { sessionId: string; pin: string; playerCount: number; isActive: boolean };
   'server:player_joined': { playerId: string; name: string; playerCount: number };
@@ -114,6 +116,17 @@ export interface QuizResponse {
 
 export interface QuizzesResponse {
   quizzes: Omit<Quiz, 'questions'>[];
+}
+
+export interface CreateSessionResponse {
+  message?: string;
+  session: {
+    id: string;
+    pin: string;
+    quizId: string;
+    playerCount: number;
+    isActive: boolean;
+  };
 }
 
 export interface SessionResponse {

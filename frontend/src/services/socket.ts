@@ -86,6 +86,11 @@ class SocketService {
     this.socket.emit(event as string, data);
   }
 
+  // Authenticate as host
+  authenticateHost(token: string): void {
+    this.emit('host:authenticate' as any, { token });
+  }
+
   // Get socket instance
   getSocket(): Socket | null {
     return this.socket;

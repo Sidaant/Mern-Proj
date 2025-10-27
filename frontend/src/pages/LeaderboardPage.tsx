@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../services/api';
-import { Session, LeaderboardEntry } from '../types';
+import { Session } from '../types';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Trophy, Medal, Award, Home } from 'lucide-react';

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { socketService } from '../services/socket';
 import { SocketEvents, GameQuestion, LeaderboardEntry } from '../types';
 import Button from '../components/Button';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { Users, Trophy, Clock } from 'lucide-react';
+import { Trophy, Clock } from 'lucide-react';
 
 const PlayPage: React.FC = () => {
   const { pin } = useParams();
-  const navigate = useNavigate();
   
   const [playerName, setPlayerName] = useState('');
   const [isJoined, setIsJoined] = useState(false);
@@ -36,7 +34,7 @@ const PlayPage: React.FC = () => {
   const connectSocket = () => {
     socketService.connect();
     
-    socketService.on('server:session_joined', (data: SocketEvents['server:session_joined']) => {
+    socketService.on('server:session_joined', (_data: SocketEvents['server:session_joined']) => {
       setIsJoined(true);
       setError('');
     });
@@ -55,7 +53,7 @@ const PlayPage: React.FC = () => {
       startTimer(data.duration);
     });
 
-    socketService.on('server:lock', (data: SocketEvents['server:lock']) => {
+    socketService.on('server:lock', (_data: SocketEvents['server:lock']) => {
       setIsLocked(true);
       setShowLeaderboard(true);
     });
@@ -103,6 +101,10 @@ const PlayPage: React.FC = () => {
     setError('');
 
     try {
+      if (!pin) {
+        setError('Invalid game PIN');
+        return;
+      }
       socketService.emit('player:join', { pin, name: playerName.trim() });
     } catch (err) {
       setError('Failed to join game');
@@ -139,7 +141,13 @@ const PlayPage: React.FC = () => {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Quiz Game</h1>
-            <p className="text-gray-600">Enter your name to join the game</p>
+            <p className="text-gray-600 mb-4">Enter your name to join the game</p>
+            {pin && (
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-primary-700 mb-1">Game PIN</p>
+                <p className="text-3xl font-bold text-primary-600">{pin}</p>
+              </div>
+            )}
           </div>
 
           <div className="card">

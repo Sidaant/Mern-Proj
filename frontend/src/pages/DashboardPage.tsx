@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../services/api';
 import { Quiz } from '../types';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Plus, Edit, Trash2, Play, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Play } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -48,7 +48,7 @@ const DashboardPage: React.FC = () => {
   const handleCreateSession = async (quizId: string) => {
     try {
       const response = await apiClient.createSession(quizId);
-      navigate(`/host/${response.session.session.id}`);
+      navigate(`/host/${response.session.id}`);
     } catch (err: any) {
       setError('Failed to create session');
       console.error('Create session error:', err);

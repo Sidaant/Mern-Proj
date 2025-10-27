@@ -1,5 +1,5 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { AuthTokens, AuthResponse, ApiResponse } from '../types';
+import axios, { AxiosInstance } from 'axios';
+import { AuthTokens, AuthResponse, ApiResponse, QuizResponse, QuizzesResponse, SessionResponse, CreateSessionResponse, SessionsResponse } from '../types';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -185,8 +185,8 @@ class ApiClient {
     return response.data;
   }
 
-  async createSession(quizId: string): Promise<SessionResponse> {
-    const response = await this.client.post<SessionResponse>('/session', { quizId });
+  async createSession(quizId: string): Promise<CreateSessionResponse> {
+    const response = await this.client.post<CreateSessionResponse>('/session', { quizId });
     return response.data;
   }
 
