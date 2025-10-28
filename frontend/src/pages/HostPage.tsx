@@ -224,6 +224,17 @@ const HostPage: React.FC = () => {
                 </div>
               </div>
               <Button
+                onClick={() => {
+                  const playUrl = `${window.location.origin}/play/${session.pin}`;
+                  window.open(playUrl, '_blank');
+                }}
+                className="flex items-center bg-green-600 hover:bg-green-700"
+                variant="primary"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Join as Player
+              </Button>
+              <Button
                 onClick={() => setShowShareModal(true)}
                 className="flex items-center"
                 variant="primary"
@@ -259,6 +270,13 @@ const HostPage: React.FC = () => {
                         ? "Share the PIN with players to let them join the game."
                         : `${session.players.length} player${session.players.length > 1 ? 's' : ''} ready! Click a question to start.`
                       }
+                    </p>
+                  </div>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-green-900 font-semibold mb-2">💡 Want to test the quiz?</p>
+                    <p className="text-green-700 text-sm">
+                      Click "Join as Player" button in the header to open the player interface where you can answer questions!
                     </p>
                   </div>
                   
